@@ -1,13 +1,13 @@
-import {connectToDB} from "./database.js"
-import express from "express"
+const connectToDB= require('./database');
+const express = require('express')
 
+connectToDB();
 const app = express()
 const port = 3000
-connectToDB();
 
 app.get('/', (req, res) => {
-    res.send('Hello World!')
-  })
+    res.send('Hello harry')
+})
 app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`)
-  })
+    console.log(`Example app listening at http://localhost:${port}`)
+})
