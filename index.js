@@ -7,6 +7,7 @@ const port = 3000
 
 //available routes
 app.use('/api/auth',require('./Routes/auth.js'))
+app.use('/api/notes',require('./Routes/notes.js'))
 app.get('/', (req, res) => {
     res.send('Root Route')
 })
