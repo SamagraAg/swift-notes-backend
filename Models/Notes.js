@@ -12,11 +12,11 @@ const NotesSchema = new Schema({
     tag:{
         type: String,
         default: "general"
-    }
+    },
     date: {
         type: Date,
         default: Date.now
     }
 });
 
-module.exports = mongoose.model('user', NotesSchema);
+module.exports = mongoose.model('notes', NotesSchema);
