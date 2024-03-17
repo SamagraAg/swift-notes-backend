@@ -20,12 +20,16 @@ router.post(
       minSymbols: 1,
     }),
   ],
-  (req, res) => {
+  async (req, res) => {
     const result = validationResult(req);
-    if (result.isEmpty()) {
-      res.send(req.body);
-      const user = User(req.body);
-      user.save();
+    if (result.isEmpty()) { //All validations passed
+      try {
+        const user = User(req.body);
+        await user.save();
+        res.send(req.body);
+      } catch (err) {
+        return res.status(400).json({ error: "Email already exists" });
+      }
     }
     res.send({ errors: result.array() });
   }
