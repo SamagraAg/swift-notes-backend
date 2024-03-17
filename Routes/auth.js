@@ -7,7 +7,9 @@ const { body, validationResult } = require("express-validator");
 router.post(
   "/",
   [
-    body("name", "Name cannot be empty").notEmpty(),
+    body("name", "Name cannot be empty").notEmpty().customSanitizer(value => {
+      return escape(value);
+    }),
     body("email", "Enter a valid email").isEmail(),
     body(
       "password",
@@ -22,7 +24,8 @@ router.post(
   ],
   async (req, res) => {
     const result = validationResult(req);
-    if (result.isEmpty()) { //All validations passed
+    if (result.isEmpty()) {
+      //All validations passed
       try {
         const user = User(req.body);
         await user.save();
