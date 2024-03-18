@@ -6,7 +6,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = "07$aM@4Ra26";
 
-//Create new user: using POST "/api/auth/createUser" (No Auth required)
+//Route1 : Create new user: using POST "/api/auth/createUser" (No Login required)
 router.post(
   "/createUser",
   [
@@ -54,6 +54,51 @@ router.post(
         email: req.body.email,
         password: securePassword,
       });
+      const data = {
+        user: {
+          id: user.id,
+        },
+      };
+      const authToken = jwt.sign(data, JWT_SECRET);
+      res.json(authToken);
+    } catch (err) {
+      console.error(err.message);
+      return res.status(500).json({ error: "Some Error Occured" });
+    }
+  }
+);
+
+//Route2 : Login user: using POST "/api/auth/login" (No Login required)
+router.post(
+  "/login",
+  [
+    body("email", "Enter a valid Email").isEmail().escape(),
+    body("password", "Password cannot be empty").exists().escape(),
+  ],
+  async (req, res) => {
+    const inputErrors = validationResult(req);
+
+    //If input validations are not valid
+    if (!inputErrors.isEmpty()) {
+      return res.status(400).json({ errors: inputErrors.array() });
+    }
+    //else if input validations are passed
+    try {
+      //Check if email is correct
+      let user = await User.findOne({ email: req.body.email });
+      if (!user) {
+        return res.status(401).json("Enter Correct Email/Password");
+      }
+      //Check if password is correct
+      const isCorrectPassword = await bcrypt.compare(
+        req.body.password,
+        user.password
+      );
+      if (!isCorrectPassword) {
+        return res.status(401).json("Enter Correct Email/Password");
+      }
+
+      //generate JWT Token
       const data = {
         user: {
           id: user.id,
