@@ -3,9 +3,9 @@ const router = express.Router();
 const User = require("../Models/User");
 const { body, validationResult } = require("express-validator");
 
-//post route for registering user(No auth required)
+//Create new user: using POST "/api/auth/createUser" (No Auth required)
 router.post(
-  "/",
+  "/createUser",
   [
     body("name", "Name cannot be empty").notEmpty().escape(),
     body("email", "Enter a valid email").isEmail().escape(),
@@ -23,18 +23,33 @@ router.post(
       .escape(),
   ],
   async (req, res) => {
-    const result = validationResult(req);
-    if (result.isEmpty()) {
-      //All validations passed
-      try {
-        const user = User(req.body);
-        await user.save();
-        res.send(req.body);
-      } catch (err) {
-        return res.status(400).json({ error: "Email already exists" });
+    const inputErrors = validationResult(req);
+
+    //If input validations are not valid
+    if (!inputErrors.isEmpty()) {
+      return res.status(400).json({ errors: inputErrors.array() });
+    }
+    //else if input validations are passed
+    try {
+      let user = await User.findOne({ email: req.body.email });
+
+      //If email already exists
+      if (user) {
+        return res
+          .status(400)
+          .json({ Error: "User with this email already exist" });
       }
-    } else {
-      res.send({ errors: result.array() });
+
+      //else create user in database
+      user = await Userd.create({
+        name: req.body.name,
+        email: req.body.email,
+        password: req.body.password,
+      });
+      res.json(user);
+    } catch (err) {
+      console.error(err.message);
+      return res.status(500).json({ error: "Some Error Occured" });
     }
   }
 );
