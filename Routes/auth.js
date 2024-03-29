@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../Models/User");
+const fetchUser = require("../Middlewares/fetchUser");
 const { body, validationResult } = require("express-validator");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -112,5 +113,17 @@ router.post(
     }
   }
 );
+
+//Route3 : Get User details: using POST "/api/auth/getUser" (Login required)
+router.post("/getUser", fetchUser, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = await User.findById(userId).select("-password");
+    res.send(user);
+  } catch (err) {
+    console.error(err.message);
+    return res.status(500).json({ error: "Some Error Occured" });
+  }
+});
 
 module.exports = router;
