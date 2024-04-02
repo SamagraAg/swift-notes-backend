@@ -22,7 +22,6 @@ router.get("/fetchallnotes", fetchUser, async (req, res) => {
 //Route2 : Add a new note: using POST "/api/notes/addnote" (Login required)
 router.post(
   "/addnote",
-  fetchUser,
   //handling input validations
   [
     body("title", "Title must be atleast 3 characters")
@@ -66,5 +65,47 @@ router.post(
     }
   }
 );
+
+//Route3 : Update a note: using PUT "/api/notes/updatenode:id" (Login required)\
+router.put("/updatenode/:id", fetchUser, async (req, res) => {
+  try {
+    //Got user ID after jwt verification from fetchUser.js
+    const userId = req.user.id;
+
+    //Fetch the node to be update
+    const note = await Note.findById(req.params.id);
+    //if the note to be updated not exist return 404
+    if (!note) {
+      return res.status(404).send("Note not found");
+    }
+
+    //Check user is authorise for update or not
+    if (note.user.toString() !== userId) {
+      return res.status(401).send("Update Not Allowed");
+    }
+
+    //user input parameters
+    const { title, description, tag } = req.body;
+
+    //Create newNote object, it will contain attributes to be updates
+    let newNote = {};
+    if (title) {
+      newNote.title = title;
+    }
+    if (description) {
+      newNote.description = description;
+    }
+    if (tag) {
+      newNote.tag = tag;
+    }
+
+    //Update the note
+    const updatedNote = await Note.findByIdAndUpdate(req.params.id, newNote, { new: true });
+    res.json(updatedNote);
+  } catch (err) {
+    console.error(err.message);
+    return res.status(500).json({ error: "Some Error Occured" });
+  }
+});
 
 module.exports = router;
