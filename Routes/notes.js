@@ -22,6 +22,7 @@ router.get("/fetchallnotes", fetchUser, async (req, res) => {
 //Route2 : Add a new note: using POST "/api/notes/addnote" (Login required)
 router.post(
   "/addnote",
+  fetchUser,
   //handling input validations
   [
     body("title", "Title must be atleast 3 characters")
