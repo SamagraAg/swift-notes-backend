@@ -56,7 +56,7 @@ router.post(
       });
 
       const savedNote = await newNote.save();
-      res.json(savedNote);
+      res.json({ Success: "Note has been created", savedNote });
 
       //if any server side error occurs
     } catch (err) {
@@ -66,8 +66,8 @@ router.post(
   }
 );
 
-//Route3 : Update a note: using PUT "/api/notes/updatenode:id" (Login required)\
-router.put("/updatenode/:id", fetchUser, async (req, res) => {
+//Route3 : Update a note: using PUT "/api/notes/updatenote/:id" (Login required)\
+router.put("/updatenote/:id", fetchUser, async (req, res) => {
   try {
     //Got user ID after jwt verification from fetchUser.js
     const userId = req.user.id;
@@ -100,8 +100,37 @@ router.put("/updatenode/:id", fetchUser, async (req, res) => {
     }
 
     //Update the note
-    const updatedNote = await Note.findByIdAndUpdate(req.params.id, newNote, { new: true });
-    res.json(updatedNote);
+    const updatedNote = await Note.findByIdAndUpdate(req.params.id, newNote, {
+      new: true,
+    });
+    res.json({ Success: "Note has been updated", updatedNote });
+  } catch (err) {
+    console.error(err.message);
+    return res.status(500).json({ error: "Some Error Occured" });
+  }
+});
+
+//Route4 : Delete a note: using DELETE "/api/notes/deletenote/:id" (Login required)
+router.delete("/deletenote/:id", fetchUser, async (req, res) => {
+  try {
+    //Got user ID after jwt verification from fetchUser.js
+    const userId = req.user.id;
+
+    //Fetch the node to be deleted
+    const note = await Note.findById(req.params.id);
+    //if the note to be deleted not exist return 404
+    if (!note) {
+      return res.status(404).send("Note not found");
+    }
+
+    //Check user is authorise for delete or not
+    if (note.user.toString() !== userId) {
+      return res.status(401).send("Deletion Not Allowed");
+    }
+
+    //Delete the nodes
+    const deleteNote = await Note.findByIdAndDelete(req.params.id);
+    res.json({ Success: "Note has been deleted", deleteNote });
   } catch (err) {
     console.error(err.message);
     return res.status(500).json({ error: "Some Error Occured" });
