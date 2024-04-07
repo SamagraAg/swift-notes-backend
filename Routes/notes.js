@@ -6,16 +6,20 @@ const fetchUser = require("../Middlewares/fetchUser");
 
 //Route1 : Fetch all notes: using GET "/api/notes/fetchallnotes" (Login required)
 router.get("/fetchallnotes", fetchUser, async (req, res) => {
+  let success = false;
   try {
     //Got user ID after jwt verification from fetchUser.js
     const userId = req.user.id;
 
     //Fetching Notes of that user
     const notes = await Note.find({ user: userId }).select();
-    res.send(notes);
+    success = true;
+    res.json({ success, notes });
+
+    //handling server errors
   } catch (err) {
     console.error(err.message);
-    return res.status(500).json({ error: "Some Error Occured" });
+    return res.status(500).json({ success, errors:"Internal Server Error" });
   }
 });
 
@@ -24,8 +28,8 @@ router.post(
   "/addnote",
   //handling input validations
   [
-    body("title", "Title must be atleast 3 characters")
-      .isLength({ min: 3 })
+    body("title", "Title must be atleast 5 characters")
+      .isLength({ min: 5 })
       .escape(),
     body("description", "Description must be atleast 5 characters")
       .isLength({ min: 5 })
@@ -34,11 +38,12 @@ router.post(
   ],
   fetchUser,
   async (req, res) => {
+    let success = false;
     try {
       //Return Errors if input validations doesnt pass
       const inputErrors = validationResult(req);
       if (!inputErrors.isEmpty()) {
-        return res.status(400).json({ errors: inputErrors.array() });
+        return res.status(400).json({ success, errors: inputErrors.array() });
       }
 
       //user input for notes
@@ -56,18 +61,20 @@ router.post(
       });
 
       const savedNote = await newNote.save();
-      res.json({ Success: "Note has been created", savedNote });
+      success = true;
+      res.json({ success: "Note has been created", savedNote });
 
       //if any server side error occurs
     } catch (err) {
       console.error(err.message);
-      return res.status(500).json({ error: "Some Error Occured" });
+      return res.status(500).json({ success, errors:"Internal Server Error" });
     }
   }
 );
 
 //Route3 : Update a note: using PUT "/api/notes/updatenote/:id" (Login required)\
 router.put("/updatenote/:id", fetchUser, async (req, res) => {
+  let success = false;
   try {
     //Got user ID after jwt verification from fetchUser.js
     const userId = req.user.id;
@@ -76,12 +83,12 @@ router.put("/updatenote/:id", fetchUser, async (req, res) => {
     const note = await Note.findById(req.params.id);
     //if the note to be updated not exist return 404
     if (!note) {
-      return res.status(404).send("Note not found");
+      return res.status(404).json({ success, error: "Note not found" });
     }
 
     //Check user is authorise for update or not
     if (note.user.toString() !== userId) {
-      return res.status(401).send("Update Not Allowed");
+      return res.status(401).json({ success, error: "Update not allowed" });
     }
 
     //user input parameters
@@ -103,16 +110,18 @@ router.put("/updatenote/:id", fetchUser, async (req, res) => {
     const updatedNote = await Note.findByIdAndUpdate(req.params.id, newNote, {
       new: true,
     });
-    res.json({ Success: "Note has been updated", updatedNote });
+    success = true;
+    res.json({ success: "Note has been updated", updatedNote });
   } catch (err) {
     console.error(err.message);
-    return res.status(500).json({ error: "Some Error Occured" });
+    return res.status(500).json({ success, errors:"Internal Server Error" });
   }
 });
 
 //Route4 : Delete a note: using DELETE "/api/notes/deletenote/:id" (Login required)
 router.delete("/deletenote/:id", fetchUser, async (req, res) => {
   try {
+    let success = false;
     //Got user ID after jwt verification from fetchUser.js
     const userId = req.user.id;
 
@@ -120,20 +129,21 @@ router.delete("/deletenote/:id", fetchUser, async (req, res) => {
     const note = await Note.findById(req.params.id);
     //if the note to be deleted not exist return 404
     if (!note) {
-      return res.status(404).send("Note not found");
+      return res.status(404).json({ success, errors: "Note not found" });
     }
 
     //Check user is authorise for delete or not
     if (note.user.toString() !== userId) {
-      return res.status(401).send("Deletion Not Allowed");
+      return res.status(401).send({ success, errors: "Deletion Not Allowed" });
     }
 
     //Delete the nodes
     const deleteNote = await Note.findByIdAndDelete(req.params.id);
-    res.json({ Success: "Note has been deleted", deleteNote });
+    success = true;
+    res.json({ success, deleteNote });
   } catch (err) {
     console.error(err.message);
-    return res.status(500).json({ error: "Some Error Occured" });
+    return res.status(500).json({ success, errors:"Internal Server Error" });
   }
 });
 

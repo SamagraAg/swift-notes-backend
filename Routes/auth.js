@@ -27,11 +27,12 @@ router.post(
       .escape(),
   ],
   async (req, res) => {
+    let success = false;
     const inputErrors = validationResult(req);
 
     //If input validations are not valid
     if (!inputErrors.isEmpty()) {
-      return res.status(400).json({ errors: inputErrors.array() });
+      return res.status(400).json({ success, errors: inputErrors.array() });
     }
     //else if input validations are passed
     try {
@@ -41,7 +42,7 @@ router.post(
       if (user) {
         return res
           .status(400)
-          .json({ Error: "User with this email already exist" });
+          .json({ success, errors: "User with this email already exist" });
       }
 
       //else create user in database
@@ -61,10 +62,11 @@ router.post(
         },
       };
       const authToken = jwt.sign(data, JWT_SECRET);
-      res.json(authToken);
+      success = true;
+      res.json({ success, authToken });
     } catch (err) {
       console.error(err.message);
-      return res.status(500).json({ error: "Some Error Occured" });
+      return res.status(500).json({ success, errors: "Internal Server error" });
     }
   }
 );
@@ -77,18 +79,21 @@ router.post(
     body("password", "Password cannot be empty").exists().escape(),
   ],
   async (req, res) => {
+    success = false;
     const inputErrors = validationResult(req);
 
     //If input validations are not valid
     if (!inputErrors.isEmpty()) {
-      return res.status(400).json({ errors: inputErrors.array() });
+      return res.status(400).json({ success, errors: inputErrors.array() });
     }
     //else if input validations are passed
     try {
       //Check if email is correct
       let user = await User.findOne({ email: req.body.email });
       if (!user) {
-        return res.status(401).json("Enter Correct Email/Password");
+        return res
+          .status(401)
+          .json({ success, errors: "Enter Correct Email/Password" });
       }
       //Check if password is correct
       const isCorrectPassword = await bcrypt.compare(
@@ -96,7 +101,9 @@ router.post(
         user.password
       );
       if (!isCorrectPassword) {
-        return res.status(401).json("Enter Correct Email/Password");
+        return res
+          .status(401)
+          .json({ success, errors: "Enter Correct Email/Password" });
       }
 
       //generate JWT Token
@@ -106,23 +113,26 @@ router.post(
         },
       };
       const authToken = jwt.sign(data, JWT_SECRET);
-      res.json(authToken);
+      success = true;
+      res.json({ success, authToken });
     } catch (err) {
       console.error(err.message);
-      return res.status(500).json({ error: "Some Error Occured" });
+      return res.status(500).json({ success, error: "Internal Server Error" });
     }
   }
 );
 
 //Route3 : Get User details: using POST "/api/auth/getUser" (Login required)
 router.post("/getUser", fetchUser, async (req, res) => {
+  let success = false;
   try {
     const userId = req.user.id;
     const user = await User.findById(userId).select("-password");
-    res.send(user);
+    success = true;
+    res.send({ success, user });
   } catch (err) {
     console.error(err.message);
-    return res.status(500).json({ error: "Some Error Occured" });
+    return res.status(500).json({ success, errors: "Some Error Occured" });
   }
 });
 
