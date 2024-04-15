@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const mongoURI = "mongodb://127.0.0.1:27017/swiftnotes";
+cconst mongoURI = "mongodb+srv://samagra110:samagra110@cluster0.pzd70zz.mongodb.net/swift-notes";
 const connectToDB = async () => {
   try {
     await mongoose.connect(mongoURI);
